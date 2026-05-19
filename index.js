@@ -22,7 +22,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // 1. MongoDB কানেক্ট করা
+   
     await client.connect();
     
     const database = client.db("mediQueueDB");
@@ -31,14 +31,13 @@ async function run() {
 
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-    // ==================== সব এপিআই রাউটস ====================
+   
 
-    // হোম রুট
+    
     app.get('/', (req, res) => {
         res.send('আমাদের এক্সপ্রেস সার্ভার সফলভাবে রান করছে!');
     });
 
-    // ১. হোম পেইজের জন্য সর্বোচ্চ ৬টি টিউটর ডেটা ফেচ করার এপিআই
     app.get('/featured-tutors', async (req, res) => {
       try {
         const result = await tutorsCollection.find().limit(6).toArray();
@@ -49,7 +48,7 @@ async function run() {
       }
     });
 
-    // ২. সব টিউটর একসাথে নিয়ে আসার এক্সপ্রেস এপিআই
+
     app.get('/api/tutors', async (req, res) => {
       try {
         const result = await tutorsCollection.find({}).sort({ _id: -1 }).toArray();
@@ -60,7 +59,7 @@ async function run() {
       }
     });
 
-    // ৩. আইডি দিয়ে সুনির্দিষ্ট ১ জন টিউটরের ডিটেইলস বের করার এক্সপ্রেস এপিআই
+
     app.get('/api/tutors/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -82,7 +81,7 @@ async function run() {
       }
     });
 
-    // 🎯 ৫. নতুন টিউটর অ্যাড করার এপিআই (POST Method)
+    
     app.post('/api/my-tutors', async (req, res) => {
       try {
         const tutorData = req.body;
@@ -105,7 +104,7 @@ async function run() {
       }
     });
 
-    // 🎯 ৬. মাই-টিউটরস গেট এপিআই (ইমেইল দিয়ে নিজের অ্যাড করা ডেটা দেখার জন্য)
+    
     app.get('/api/my-tutors', async (req, res) => {
       try {
         const email = req.query.email;
@@ -124,7 +123,7 @@ async function run() {
       }
     });
 
-    // 🎯 7. টিউটর ডিলিট করার এপিআই (DELETE Method)
+    
     app.delete('/api/tutors/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -147,7 +146,7 @@ async function run() {
       }
     });
 
-    // 🎯 ৮. টিউটর আপডেট করার এপিআই (PATCH Method)
+    
     app.patch('/api/tutors/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -180,12 +179,12 @@ async function run() {
     });
 
 
-    // 🛠️ 🎯 ৪. সেশন বুকিং করার এবং স্লট ১ কমানোর এপিআই (POST Method - ফিক্সড করা হয়েছে)
+    
     app.post('/api/bookings', async (req, res) => {
       try {
         const { studentName, phone, tutorId, tutorName, studentEmail } = req.body;
 
-        // ভ্যালিডেশন চেক
+      
         if (!ObjectId.isValid(tutorId)) {
           return res.status(400).send({ error: "Invalid Tutor ID format" });
         }
@@ -213,7 +212,7 @@ async function run() {
           }
         }
 
-        // বুকিং অবজেক্ট তৈরি
+      
         const bookingData = {
           studentName,
           phone,
@@ -224,10 +223,10 @@ async function run() {
           createdAt: new Date()
         };
 
-        // বুকিং কালেকশনে সেভ করা
+        
         const bookingResult = await bookingsCollection.insertOne(bookingData);
 
-        // টিউটর কালেকশনে স্লট ১ কমানো
+        
         await tutorsCollection.updateOne(
           tutorQuery,
           { $inc: { [slotFieldName]: -1 } } 
@@ -246,7 +245,7 @@ async function run() {
     });
 
 
-    // 🎯 ৯. নির্দিষ্ট ইউজারের বুকিং হিস্টোরি দেখার এপিআই (GET Method)
+    
     app.get('/api/bookings', async (req, res) => {
       try {
         const email = req.query.email;
@@ -266,7 +265,6 @@ async function run() {
     });
 
 
-    // 🎯 ১০. বুকিং ক্যানসেল করার এপিআই (PATCH Method)
     app.patch('/api/bookings/cancel/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -294,9 +292,9 @@ async function run() {
     });
 
 
-    // 2. ডাটাবেজ ও রাউট রেডি হওয়ার পর সার্ভার লিসেন করা
+
     app.listen(PORT, () => {
-        console.log(`সার্ভার চলছে এই লিঙ্কে: http://localhost:${PORT}`);
+        console.log(`server runnig this link : http://localhost:${PORT}`);
     });
 
   } catch (error) {
