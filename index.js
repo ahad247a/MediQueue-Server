@@ -124,7 +124,7 @@ async function run() {
       }
     });
 
-    // 🎯 7. টিউটর ডিলিট করার এপিআই (DELETE Method) - নতুন যুক্ত করা হয়েছে
+    // 🎯 7. টিউটর ডিলিট করার এপিআই (DELETE Method)
     app.delete('/api/tutors/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -147,7 +147,7 @@ async function run() {
       }
     });
 
-    // 🎯 ৮. টিউটর আপডেট করার এপিআই (PATCH Method) - নতুন যুক্ত করা হয়েছে
+    // 🎯 ৮. টিউটর আপডেট করার এপিআই (PATCH Method)
     app.patch('/api/tutors/:id', async (req, res) => {
       try {
         const id = req.params.id;
@@ -159,7 +159,6 @@ async function run() {
 
         const filter = { _id: new ObjectId(id) };
         
-        // ফ্রন্টএন্ড থেকে যদি নাম্বার ফিল্ড স্ট্রিং হয়ে আসে, তা নাম্বার এ কনভার্ট করা
         if (updatedData.hourlyFee) updatedData.hourlyFee = Number(updatedData.hourlyFee);
         if (updatedData.totalSlot) updatedData.totalSlot = Number(updatedData.totalSlot);
 
@@ -180,11 +179,13 @@ async function run() {
       }
     });
 
-    // ৪. সেশন বুকিং করার এবং স্লট ১ কমানোর এপিআই
+
+    // 🛠️ 🎯 ৪. সেশন বুকিং করার এবং স্লট ১ কমানোর এপিআই (POST Method - ফিক্সড করা হয়েছে)
     app.post('/api/bookings', async (req, res) => {
       try {
         const { studentName, phone, tutorId, tutorName, studentEmail } = req.body;
 
+        // ভ্যালিডেশন চেক
         if (!ObjectId.isValid(tutorId)) {
           return res.status(400).send({ error: "Invalid Tutor ID format" });
         }
@@ -212,6 +213,7 @@ async function run() {
           }
         }
 
+        // বুকিং অবজেক্ট তৈরি
         const bookingData = {
           studentName,
           phone,
@@ -222,8 +224,10 @@ async function run() {
           createdAt: new Date()
         };
 
+        // বুকিং কালেকশনে সেভ করা
         const bookingResult = await bookingsCollection.insertOne(bookingData);
 
+        // টিউটর কালেকশনে স্লট ১ কমানো
         await tutorsCollection.updateOne(
           tutorQuery,
           { $inc: { [slotFieldName]: -1 } } 
@@ -241,13 +245,62 @@ async function run() {
       }
     });
 
+
+    // 🎯 ৯. নির্দিষ্ট ইউজারের বুকিং হিস্টোরি দেখার এপিআই (GET Method)
+    app.get('/api/bookings', async (req, res) => {
+      try {
+        const email = req.query.email;
+
+        if (!email) {
+          return res.status(400).send({ error: "Student email query parameter is required" });
+        }
+
+        const query = { studentEmail: email };
+        const result = await bookingsCollection.find(query).sort({ createdAt: -1 }).toArray();
+
+        res.send(result);
+      } catch (error) {
+        console.error("Error fetching my bookings:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
+    });
+
+
+    // 🎯 ১০. বুকিং ক্যানসেল করার এপিআই (PATCH Method)
+    app.patch('/api/bookings/cancel/:id', async (req, res) => {
+      try {
+        const id = req.params.id;
+
+        if (!ObjectId.isValid(id)) {
+          return res.status(400).send({ error: "Invalid Booking ID format" });
+        }
+
+        const filter = { _id: new ObjectId(id) };
+        const updateDoc = {
+          $set: { bookStatus: "cancelled" }
+        };
+
+        const result = await bookingsCollection.updateOne(filter, updateDoc);
+
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ error: "Booking not found" });
+        }
+
+        res.send({ success: true, message: "Booking cancelled successfully!" });
+      } catch (error) {
+        console.error("Error cancelling booking:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
+    });
+
+
     // 2. ডাটাবেজ ও রাউট রেডি হওয়ার পর সার্ভার লিসেন করা
     app.listen(PORT, () => {
         console.log(`সার্ভার চলছে এই লিঙ্কে: http://localhost:${PORT}`);
     });
 
   } catch (error) {
-    console.error("Database initialization error:", error);
+    console.log("Database initialization error:", error);
   }
 }
 
